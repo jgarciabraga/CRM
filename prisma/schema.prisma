@@ -1,0 +1,248 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoFuncionario{
+  Diretor
+  Gerente
+  Vendedor
+}
+
+enum TipoCliente{
+  PF
+  PJ
+}
+
+enum Permissao{
+  admin
+  user
+  blocked
+}
+
+enum Estados{
+  AC
+  AL
+  AP
+  AM
+  BA
+  CE
+  DF
+  ES
+  GO
+  MA
+  MT
+  MS
+  MG
+  PA
+  PB
+  PR
+  PE
+  PI
+  RJ
+  RN
+  RS
+  RO
+  RR
+  SC
+  SP
+  SE
+  TO
+}
+
+
+model Funcionario {
+  id           Int               @id @default(autoincrement())
+  email        String            @unique @db.VarChar(255)
+  senha        String            @db.VarChar(255)
+  cpf          String            @unique @db.VarChar(255) 
+  tipo         TipoFuncionario   @default(Vendedor)
+  salario      Decimal?          @default(0) @db.Decimal(10,2)
+  permissao    Permissao         @default(blocked)
+  gerente      Gerente?
+  vendedor     Vendedor?
+  diretor      Diretor?
+  login        Login[]
+  nome         String
+  endereco     String            
+  cep          String
+  municipio    String
+  estado       Estados
+  telefone     String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deletedAt    DateTime?         
+  
+}
+
+model Login{
+  id               Int               @id  @default(autoincrement())
+  id_funcionario   Int
+  funcionario      Funcionario       @relation(fields: [id_funcionario], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?                
+}
+
+
+model Loja {
+  id          Int        @id @default(autoincrement())
+  nome        String     @unique
+  endereco    String     @unique
+  cep         String
+  municipio   String
+  estado      Estados
+  id_diretor  Int
+  telefone    String  
+  diretor     Diretor    @relation(fields: [id_diretor], references: [id])
+  gerente     Gerente?
+  vendedores  Vendedor[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime? 
+}
+
+model Gerente{
+  id                    Int            @id @default(autoincrement())
+  id_func               Int            @unique
+  funcionario           Funcionario    @relation(fields: [id_func], references: [id])
+  id_loja               Int            @unique
+  loja                  Loja           @relation(fields: [id_loja], references: [id])
+  telefone_trabalho     String         @unique
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?      
+}
+
+model Vendedor{
+  id                    Int            @id @default(autoincrement())
+  id_func               Int            @unique
+  funcionario           Funcionario    @relation(fields: [id_func], references: [id])
+  loja                  Loja?           @relation(fields: [id_loja], references: [id])
+  id_loja               Int?          
+  vendas                Venda[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       
+}
+
+model Diretor{
+  id                    Int            @id @default(autoincrement())
+  id_func               Int            @unique
+  funcionario           Funcionario    @relation(fields: [id_func], references: [id])
+  telefone_trabalho     String         @unique
+  lojas                 Loja[] 
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?      
+}
+
+model PfPj{
+  id                    Int            @id @default(autoincrement())
+  tipo_cliente          TipoCliente    @default(PJ)
+  vendas                Venda[]
+  enderecos_entregas    EnderecoEntrega[]
+  clientePf             ClientePF?
+  clientePj             ClientePJ?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       @updatedAt           
+}
+
+model ClientePF{
+  id                    Int            @id @default(autoincrement())
+  cpf                   String         @unique  @db.VarChar(11)
+  nome                  String
+  email                 String         @unique
+  endereco              String         
+  cep                   String
+  municipio             String
+  estado                Estados
+  telefone              String
+  id_pfpj               Int            @unique
+  pfpj                  PfPj           @relation(fields: [id_pfpj], references: [id])
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       @updatedAt
+}
+
+model ClientePJ{
+  id                    Int            @id @default(autoincrement())
+  cnpj                  String         @unique  @db.VarChar(11)
+  nome                  String
+  nome_fantasia         String
+  nome_contato          String
+  email                 String         @unique
+  endereco              String         
+  cep                   String
+  municipio             String
+  estado                Estados
+  telefone              String
+  id_pfpj               Int            @unique
+  pfpj                  PfPj           @relation(fields: [id_pfpj], references: [id])
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       @updatedAt
+}
+
+model EnderecoEntrega{
+  id                    Int            @id @default(autoincrement())
+  id_cliente            Int
+  cliente               PfPj           @relation(fields: [id_cliente], references: [id])
+  endereco              String         @unique
+  cep                   String
+  municipio             String
+  estado                Estados
+  telefone              String
+  venda                 Venda[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       @updatedAt
+}
+
+model Venda{
+  id                    Int              @id @default(autoincrement())
+  id_vendedor           Int
+  vendedor              Vendedor         @relation(fields: [id_vendedor], references: [id])
+  id_cliente            Int
+  cliente               PfPj             @relation(fields: [id_cliente], references: [id])
+  id_endereco_entrega   Int              
+  endereco_entrega      EnderecoEntrega  @relation(fields: [id_endereco_entrega], references: [id])
+  total                 Float
+  produtos              VendaProduto[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       @updatedAt
+}
+
+model VendaProduto{
+  id                    Int              @id   @default(autoincrement())
+  id_produto            Int
+  produto               Produto          @relation(fields: [id_produto], references: [id])
+  id_venda              Int            
+  venda                 Venda            @relation(fields: [id_venda], references: [id])
+}
+
+model Produto{
+  id                    Int              @id @default(autoincrement())
+  nome                  String
+  descricao             String
+  preco                 Float
+  vendas                VendaProduto[]
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?       @updatedAt  
+}
+
+
+
+
+
+
