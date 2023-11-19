@@ -12,17 +12,6 @@ funcionarioRepository.addFuncionario = async (data) => {
   }
 };
 
-funcionarioRepository.eraserFuncionarioById = async (id) => {
-  try {
-    console.log(id);
-    const result = await prisma.funcionario.delete({ where: { id } });
-    return result;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-};
-
 funcionarioRepository.addDiretor = async (data) => {
   try {
     const diretor = await prisma.diretor.create({ data });
@@ -53,7 +42,84 @@ funcionarioRepository.addVendedor = async (data) => {
   }
 };
 
-funcionarioRepository.changeFuncionarioByEmail = async (email, data) => {};
+funcionarioRepository.changeFuncionarioByEmail = async (tipo, email, data) => {
+  if (verificaFuncionarioOn(email)) {
+    if (tipo === "alteracao") {
+      try {
+        const funcionario = prisma.funcionario.update({
+          where: { email },
+          data,
+        });
+        if (funcionario.tipo === "Diretor") {
+          if (data.telefone_trabalho) {
+            const diretor = prisma.diretor.update({
+              where: { id_func: Number(diretor.id) },
+              data: {
+                telefone_trabalho: data.telefone_trabalho,
+                id_func: undefined,
+              },
+            });
+            funcionario.telefone_trabalho = diretor.telefone_trabalho;
+          }
+        } else if (funcionario.tipo === "Gerente") {
+          if (data.telefone_trabalho) {
+            const gerente = prisma.gerente.update({
+              where: { id_func: Number(gerente.id) },
+              data: {
+                telefone_trabalho: data.telefone_trabalho,
+                id_loja: undefined,
+              },
+            });
+            funcionario.telefone_trabalho = gerente.telefone_trabalho;
+          }
+        } else {
+          return funcionario;
+        }
+        return funcionario;
+      } catch (error) {
+        return null;
+      }
+    } else if (tipo === "desligamento") {
+      if (data.data_desligamento) {
+        try {
+          const funcionario = prisma.funcionario.update({
+            where: { email },
+            data,
+          });
+          if (funcionario.tipo === "Diretor") {
+            const diretor = prisma.diretor.update({
+              where: { id_func: Number(funcionario.id) },
+              data,
+            });
+            funcionario.data_desligamento = data_desligamento;
+          } else if (funcionario.tipo === "Gerente") {
+            const gerente = prisma.gerente.update({
+              where: { id_func: Number(funcionario.id) },
+              data,
+            });
+            funcionario.data_desligamento = data_desligamento;
+          } else {
+            const vendedor = prisma.vendedor.update({
+              where: { id_func: Number(funcionario.id) },
+              data,
+            });
+            funcionario.data_desligamento = data_desligamento;
+          }
+          return funcionario;
+        } catch (error) {
+          console.log(error);
+          return null;
+        }
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
 
 funcionarioRepository.selectFuncionarioByEmail = async (email) => {
   try {
@@ -99,5 +165,98 @@ funcionarioRepository.selectFuncionarioByEmail = async (email) => {
     return null;
   }
 };
+
+funcionarioRepository.eraserFuncionarioByEmail = async (email, data) => {
+  if (await verificaFuncionarioOn(email)) {
+    if (data.deletedAt) {
+      try {
+        const funcionario = await prisma.funcionario.update({
+          where: { email },
+          data,
+        });
+        if (funcionario.tipo === "Diretor") {
+          const diretor = await prisma.diretor.update({
+            where: { id_func: Number(funcionario.id) },
+            data: {
+              deletedAt: data.deletedAt,
+              telefone_trabalho: undefined,
+            },
+          });
+          funcionario.data_desligamento = diretor.deletedAt;
+        } else if (funcionario.tipo === "Gerente") {
+          const gerente = await prisma.gerente.update({
+            where: { id_func: Number(funcionario.id) },
+            data: {
+              deletedAt: data.deletedAt,
+              telefone_trabalho: undefined,
+              id_loja: undefined,
+            },
+          });
+          funcionario.data_desligamento = gerente.deletedAt;
+        } else {
+          const vendedor = await prisma.vendedor.update({
+            where: { id_func: Number(funcionario.id) },
+            data: { deletedAt: data.deletedAt },
+          });
+          funcionario.data_desligamento = vendedor.deletedAt;
+        }
+        return { status: "deletado", funcionario };
+      } catch (error) {
+        console.log(error);
+        return null;
+      }
+    } else {
+      return null;
+    }
+  } else {
+    return { status: "deletado", funcionario: null };
+  }
+};
+
+async function verificaFuncionarioOn(email) {
+  try {
+    const funcionario = await prisma.funcionario.findUnique({
+      where: { email },
+    });
+    if (funcionario.deletedAt === null) {
+      return true;
+    } else {
+      if (funcionario.tipo === "Diretor") {
+        const diretor = await prisma.diretor.findUnique({
+          where: { id_func: Number(funcionario.id) },
+        });
+        if (diretor.deletedAt != funcionario.deletedAt) {
+          await prisma.diretor.update({
+            where: { id: Number(diretor.id) },
+            data: { deletedAt: funcionario.deletedAt },
+          });
+        }
+      } else if (funcionario.tipo === "Gerente") {
+        const gerente = await prisma.gerente.findUnique({
+          where: { id_func: Number(funcionario.id) },
+        });
+        if (gerente.deletedAt != funcionario.deletedAt) {
+          await prisma.gerente.update({
+            where: { id: gerente.id },
+            data: { deletedAt: funcionario.deletedAt },
+          });
+        }
+      } else {
+        const vendedor = await prisma.vendedor.findUnique({
+          where: { id_func: Number(funcionario.id) },
+        });
+        if (vendedor.deletedAt != funcionario.deletedAt) {
+          await prisma.vendedor.update({
+            where: { id: vendedor.id },
+            data: { deletedAt: funcionario.deletedAt },
+          });
+        }
+      }
+      return false;
+    }
+  } catch (error) {
+    return false;
+  }
+}
 
 module.exports = funcionarioRepository;

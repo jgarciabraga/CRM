@@ -1,7 +1,8 @@
 const {
   createFuncionario,
-  deleteFuncionarioById,
+  deleteFuncionarioByEmail,
   getFuncionarioByEmail,
+  updateFuncionarioByEmail,
   createDiretor,
   createGerente,
   createVendedor,
@@ -14,7 +15,7 @@ funcionarioRoutes.createFuncionario = (app) => {
 };
 
 funcionarioRoutes.deleteFuncionarioById = (app) => {
-  app.delete("/funcionario/:id", deleteFuncionarioById);
+  app.delete("/funcionario/:email", deleteFuncionarioByEmail);
 };
 
 funcionarioRoutes.createDiretor = (app) => {
@@ -31,6 +32,10 @@ funcionarioRoutes.createVendedor = (app) => {
 
 funcionarioRoutes.getFuncionarioByEmail = (app) => {
   app.get("/funcionario/:email", getFuncionarioByEmail);
+};
+
+funcionarioRoutes.updateFuncionarioByEmail = (app) => {
+  app.patch("/funcionario/:tipo/:email", updateFuncionarioByEmail);
 };
 
 module.exports = funcionarioRoutes;

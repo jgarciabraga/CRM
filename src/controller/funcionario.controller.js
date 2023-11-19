@@ -1,7 +1,8 @@
 const {
   addFuncionario,
-  eraserFuncionarioById,
+  eraserFuncionarioByEmail,
   selectFuncionarioByEmail,
+  changeFuncionarioByEmail,
   addDiretor,
   addGerente,
   addVendedor,
@@ -28,27 +29,6 @@ const createFuncionario = async (req, res) => {
     console.log(error);
     res.status(400).send(error);
     return { status: "erro ao inserir funcionario" };
-  }
-};
-
-const deleteFuncionarioById = async (req, res) => {
-  try {
-    console.log(req.params.id);
-    const result = await eraserFuncionarioById(Number(req.params.id));
-    if (result) {
-      console.log(result);
-      const msg = { status: "sucesso ao deletar funcionario" };
-      res.status(200).send(msg);
-      return result;
-    } else {
-      const msg = { status: "erro ao deletar funcionario" };
-      res.status(400).send(msg);
-      return result;
-    }
-  } catch (error) {
-    const msg = { status: "erro ao deletar funcionario" };
-    console.log(error);
-    return result;
   }
 };
 
@@ -133,7 +113,7 @@ const createGerente = async (req, res) => {
 };
 
 const createVendedor = async (req, res) => {
-  data = req.body;
+  const data = req.body;
   const hash = await hashPassword(data.senha);
   const data_funcionario = {
     cpf: data.cpf,
@@ -198,10 +178,112 @@ const getFuncionarioByEmail = async (req, res) => {
   }
 };
 
+const updateFuncionarioByEmail = async (req, res) => {
+  try {
+    let data = {};
+    if (req.params.tipo === "alteracao") {
+      data = {
+        email: req.body.email || undefined,
+        cpf: req.body.cpf || undefined,
+        permissao: undefined,
+        salario: req.body.salario || undefined,
+        email: req.body.email || undefined,
+        senha: undefined,
+        endereco: req.body.endereco || undefined,
+        estado: req.body.estado || undefined,
+        municipio: req.body.municipio || undefined,
+        nome: req.body.nome || undefined,
+        telefone: req.body.telefone || undefined,
+        tipo: undefined,
+        cep: req.body.cep || undefined,
+        telefone_trabalho: req.body.telefone_trabalho || undefined,
+      };
+    } else if (req.params.tipo === "desligamento") {
+      data = {
+        email: req.body.email || undefined,
+        cpf: req.body.cpf || undefined,
+        permissao: "blocked",
+        salario: req.body.salario || undefined,
+        email: req.body.email || undefined,
+        senha: undefined,
+        endereco: req.body.endereco || undefined,
+        estado: req.body.estado || undefined,
+        municipio: req.body.municipio || undefined,
+        nome: req.body.nome || undefined,
+        telefone: req.body.telefone || undefined,
+        tipo: undefined,
+        cep: req.body.cep || undefined,
+        telefone_trabalho: req.body.telefone_trabalho || undefined,
+        deletedAt: new Date(),
+      };
+    } else {
+      const msg = { status: "erro", tipo: "operacao invalida" };
+      res.status(400).send(msg);
+      return msg;
+    }
+
+    const funcionario = await changeFuncionarioByEmail(
+      req.params.tipo,
+      req.params.email,
+      data
+    );
+    if (funcionario != null) {
+      res.status(200).send({ status: "updated", funcionario });
+      return { status: "updated", funcionario };
+    } else {
+      return { status: "erro", undefined };
+    }
+  } catch (error) {
+    console.log(error);
+    return { status: "erro", undefined };
+  }
+};
+
+const deleteFuncionarioByEmail = async (req, res) => {
+  try {
+    let data = {};
+    data = {
+      email: req.body.email || undefined,
+      cpf: req.body.cpf || undefined,
+      permissao: "blocked",
+      salario: req.body.salario || undefined,
+      email: req.body.email || undefined,
+      senha: undefined,
+      endereco: req.body.endereco || undefined,
+      estado: req.body.estado || undefined,
+      municipio: req.body.municipio || undefined,
+      nome: req.body.nome || undefined,
+      telefone: req.body.telefone || undefined,
+      tipo: undefined,
+      cep: req.body.cep || undefined,
+      telefone_trabalho: req.body.telefone_trabalho || undefined,
+      deletedAt: new Date(),
+    };
+    const resp = await eraserFuncionarioByEmail(req.params.email, data);
+    if (resp != null) {
+      if (resp.funcionario != null) {
+        const msg = { status: "deletado", funcionario: resp.funcionario };
+        res.status(200).send(msg);
+        return msg;
+      } else {
+        const msg = { status: "erro", message: "funcionário já deletado" };
+        res.status(200).send(msg);
+        return msg;
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    const msg = { status: "erro", message: "erro ao deltar funcionário" };
+    res.status(400).send(msg);
+    return msg;
+  }
+};
+
 module.exports = {
   createFuncionario,
-  deleteFuncionarioById,
+  deleteFuncionarioByEmail,
   getFuncionarioByEmail,
+  updateFuncionarioByEmail,
   createDiretor,
   createGerente,
   createVendedor,
