@@ -2,6 +2,21 @@ const prisma = require("../services/prisma");
 
 const funcionarioRepository = {};
 
+funcionarioRepository.login = async (email) => {
+  try {
+    if (verificaFuncionarioOn(email)) {
+      const funcionario = await prisma.funcionario.findUnique({
+        where: { email },
+      });
+      return funcionario;
+    }
+    return null;
+  } catch (erro) {
+    console.log(erro);
+    return null;
+  }
+};
+
 funcionarioRepository.addFuncionario = async (data) => {
   try {
     const funcionario = await prisma.funcionario.create({ data });

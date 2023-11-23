@@ -1,4 +1,5 @@
 const {
+  singIn,
   createFuncionario,
   deleteFuncionarioByEmail,
   getFuncionarioByEmail,
@@ -9,6 +10,10 @@ const {
 } = require("../controller/funcionario.controller");
 
 const funcionarioRoutes = {};
+
+funcionarioRoutes.singIn = (app) => {
+  app.post("/singIn", singIn);
+};
 
 funcionarioRoutes.createFuncionario = (app) => {
   app.post("/funcionario", createFuncionario);

@@ -22,4 +22,15 @@ produtoRepository.getProdutoById = async (id) => {
   }
 };
 
+produtoRepository.getProdutos = async () => {
+  try {
+    const produtos = await prisma.produto.findMany({
+      where: { deletedAt: null },
+    });
+    return { status: "encontrado", produtos };
+  } catch {
+    return { status: "erro", produtos: null };
+  }
+};
+
 module.exports = produtoRepository;

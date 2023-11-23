@@ -2,8 +2,89 @@ from faker import Faker
 import random
 import requests
 import json
+import mysql.connector
+from random import randint
 
 fake = Faker()
+
+def create_venda_produto():
+
+    url_venda = "http://localhost:3001/venda"
+    url_vendaproduto = "http://localhost:3001/vendaProduto"
+
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        port = 3306,
+        database="crm"
+    )
+    mycursor = mydb.cursor()
+
+    for i in range(1,800):
+        id_vendedor = int(randint(1, 200))
+        id_cliente = int(randint(110, 209))
+        query = f"""select id 
+        from EnderecoEntrega
+        WHERE id_cliente = {id_cliente};"""
+        mycursor.execute(query)
+        row = mycursor.fetchone()
+        id_endEnt = int(row[0])
+        print(row)
+        print(id_endEnt)
+        qtd_produtos = int(randint(1,10))
+        id_produtos = []
+        preco_produtos = []
+        for k in range(1,qtd_produtos+1):
+            id_prod = (randint(1,300))
+            query_p = f"""select preco 
+            from Produto
+            WHERE id = {id_prod};"""
+            mycursor.execute(query_p)
+            row = mycursor.fetchone()
+            print(row)
+            print(row[0])
+            preco_produtos.append(float(row[0]))
+            id_produtos.append(id_prod)
+        
+        data_venda = {
+            "id_vendedor": id_vendedor,
+            "id_cliente": id_cliente,
+            "id_endereco_entrega": id_endEnt,
+            "total": round(sum(preco_produtos), 2)
+        }
+
+        response = requests.post(url_venda, json=data_venda)
+        print(response.status_code)
+
+        for l in range(len(id_produtos)):
+            data_vendaProduto = {
+                "id_produto": int(id_produtos[l]),
+                "id_venda": i
+            }
+
+            response = requests.post(url_vendaproduto, json=data_vendaProduto)
+            print(response.status_code)
+        
+
+
+def apaga_deletedAt():
+    
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        port = 3306,
+        database="crm"
+    )
+    mycursor = mydb.cursor()
+    for i in range(1,107):
+        query = f"""UPDATE PfPj 
+        SET deletedAt = null 
+        WHERE id = {i};"""
+        mycursor.execute(query)
+        mydb.commit()
+        print(mycursor.rowcount, "record(s) affected")
 
 def populate_produto(qtd:int):
     
@@ -227,6 +308,90 @@ def populate_loja(qtd:int):
         print(response.status_code)
         print(response.text)
 
+def populate_cliente_pf(qtd:int):
+
+    url = "http://localhost:3001/pfpjClientePf"
+    for i in range(qtd):
+        estado = "RJ"
+        primeiro_nome = fake.first_name()
+        segundo_nome = fake.last_name()
+        nome = primeiro_nome + ' ' + segundo_nome
+        email = str(primeiro_nome).lower() + str(segundo_nome).lower() + "@gmail.com"
+        cpf = ''.join(str(random.randint(0, 9)) for _ in range(11))
+        cep = ''.join(str(random.randint(0, 9)) for _ in range(5))
+        endereco = fake.address()
+        municipio = fake.city()
+        nome = fake.name()
+        telefone = ''.join(str(random.randint(0, 9)) for _ in range(9))
+        data = {
+            "cpf":cpf,
+            "tipo_cliente":"PF",
+            "email":email,
+            "cep":cep,
+            "endereco":endereco,
+            "estado":estado,
+            "municipio":municipio,
+            "nome":nome,
+            "telefone":telefone,
+        }
+        response = requests.post(url, json=data)
+        print(response.status_code)
+        print(response.text)
+
+def populate_cliente_pj(qtd:int):
+
+    url = "http://localhost:3001/pfpjClientePj"
+    for i in range(qtd):
+        estado = "SP"
+        primeiro_nome = fake.first_name()
+        segundo_nome = fake.last_name()
+        nome_contato = primeiro_nome + ' ' + segundo_nome
+        cnpj = ''.join(str(random.randint(0, 9)) for _ in range(11))
+        cep = ''.join(str(random.randint(0, 9)) for _ in range(5))
+        endereco = fake.address()
+        municipio = fake.city()
+        n_fantasia =  fake.company()
+        nome_fantasia =  n_fantasia + ' ' + fake.company_suffix()
+        email = str(primeiro_nome).lower() + str(segundo_nome).lower() + "@" + n_fantasia.lower().replace(" ", "") + ".com"
+        telefone = ''.join(str(random.randint(0, 9)) for _ in range(9))
+        data = {
+            "cnpj":cnpj,
+            "tipo_cliente":"PJ",
+            "email":email,
+            "cep":cep,
+            "endereco":endereco,
+            "estado":estado,
+            "municipio":municipio,
+            "nome_contato":nome_contato,
+            "nome": nome_fantasia,
+            "nome_fantasia": nome_fantasia,
+            "telefone":telefone,
+        }
+        response = requests.post(url, json=data)
+        print(response.status_code)
+        print(response.text)
+
+def populate_enderecoEntrega(qtd:int):
+
+    url = "http://localhost:3001/enderecoEntrega"
+    for i in range(110,qtd):
+        estado = "SP"
+        cep = ''.join(str(random.randint(0, 9)) for _ in range(5))
+        endereco = fake.address()
+        municipio = fake.city()
+        telefone = ''.join(str(random.randint(0, 9)) for _ in range(9))
+        data = {
+            "id_cliente": i,
+            "endereco":endereco,
+            "cep": cep,
+            "estado":estado,
+            "municipio":municipio,
+            "telefone":telefone,
+        }
+        response = requests.post(url, json=data)
+        print(response.status_code)
+        print(response.text)
+
 if __name__ == "__main__":
 
    #for i in [x for x in range(240,430,1)]:
@@ -236,5 +401,9 @@ if __name__ == "__main__":
    #populate_diretor(2)
    #populate_loja(20)
    #populate_vendedor(10)
-   populate_gerente()
-
+   #populate_gerente()
+   #populate_cliente_pf(99)
+   #populate_cliente_pj(99)
+   #apaga_deletedAt()
+   #populate_enderecoEntrega(210);
+   create_venda_produto()

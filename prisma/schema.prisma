@@ -153,7 +153,7 @@ model PfPj{
   clientePj             ClientePJ?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  deletedAt             DateTime?       @updatedAt           
+  deletedAt             DateTime?           
 }
 
 model ClientePF{
@@ -170,7 +170,7 @@ model ClientePF{
   pfpj                  PfPj           @relation(fields: [id_pfpj], references: [id])
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  deletedAt             DateTime?       @updatedAt
+  deletedAt             DateTime?
 }
 
 model ClientePJ{
@@ -189,7 +189,7 @@ model ClientePJ{
   pfpj                  PfPj           @relation(fields: [id_pfpj], references: [id])
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  deletedAt             DateTime?       @updatedAt
+  deletedAt             DateTime?
 }
 
 model EnderecoEntrega{
@@ -204,7 +204,7 @@ model EnderecoEntrega{
   venda                 Venda[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  deletedAt             DateTime?       @updatedAt
+  deletedAt             DateTime?       
 }
 
 model Venda{
@@ -219,7 +219,7 @@ model Venda{
   produtos              VendaProduto[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  deletedAt             DateTime?       @updatedAt
+  deletedAt             DateTime?       
 }
 
 model VendaProduto{
@@ -238,7 +238,7 @@ model Produto{
   vendas                VendaProduto[]
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  deletedAt             DateTime?       @updatedAt  
+  deletedAt             DateTime?      
 }
 
 

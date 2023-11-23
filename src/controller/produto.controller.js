@@ -1,6 +1,7 @@
 const {
   getProdutoById,
   createProduto,
+  getProdutos,
 } = require("../repository/produto.repository");
 
 const produtoController = {};
@@ -29,6 +30,22 @@ produtoController.getProdutoById = async (req, res) => {
     }
   } catch (error) {
     res.status(400).send(error);
+  }
+};
+
+produtoController.getProdutos = async (req, res) => {
+  try {
+    const resp = await getProdutos();
+    if (resp.produtos) {
+      res.status(200).send(resp);
+      return resp;
+    }
+    res.status(400).send(resp);
+    return resp;
+  } catch (error) {
+    const msg = { status: "erro", produtos: null };
+    res.status(400).send(msg);
+    return msg;
   }
 };
 

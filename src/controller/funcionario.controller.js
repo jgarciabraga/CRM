@@ -1,14 +1,14 @@
 const {
-  addFuncionario,
+  login,
   eraserFuncionarioByEmail,
   selectFuncionarioByEmail,
   changeFuncionarioByEmail,
+  addFuncionario,
   addDiretor,
   addGerente,
   addVendedor,
 } = require("../repository/funcionario.repository");
 const bcrypt = require("bcrypt");
-const { funcionario } = require("../services/prisma");
 
 async function hashPassword(plainPassword) {
   const hash = await bcrypt.hash(plainPassword, 10);
@@ -19,6 +19,36 @@ async function comparePassword(plainPassword, hash) {
   const result = await bcrypt.compare(plainPassword, hash);
   return result;
 }
+
+const singIn = async (req, res) => {
+  const data = req.body;
+  try {
+    let funcionario = await login(data.email);
+    if (funcionario != null) {
+      const result = await comparePassword(data.senha, funcionario.senha);
+      if (result) {
+        funcionario.senha = undefined;
+        const msg = { status: "sucesso", funcionario };
+        res.status(200).send(msg);
+        return msg;
+      }
+      res
+        .status(200)
+        .send({ stattus: "erro", resposta: "login ou senha incorretos" });
+      return { stattus: "erro", resposta: "login ou senha incorretos" };
+    }
+    res
+      .status(200)
+      .send({ stattus: "erro", resposta: "login ou senha incorretos" });
+    return { stattus: "erro", resposta: "login ou senha incorretos" };
+  } catch (erro) {
+    console.log(erro);
+    res
+      .status(200)
+      .send({ stattus: "erro", resposta: "login ou senha incorretos" });
+    return { stattus: "erro", resposta: "login ou senha incorretos" };
+  }
+};
 
 const createFuncionario = async (req, res) => {
   try {
@@ -280,6 +310,7 @@ const deleteFuncionarioByEmail = async (req, res) => {
 };
 
 module.exports = {
+  singIn,
   createFuncionario,
   deleteFuncionarioByEmail,
   getFuncionarioByEmail,
